@@ -24,7 +24,7 @@ const obs = new IntersectionObserver(entries => {
 document.querySelectorAll('main section[id], #siteplan').forEach(s => obs.observe(s));
 
 // Formulir → WhatsApp (ganti nomor di bawah, format 62 tanpa tanda +)
-const NOMOR_WA = '6281234567890';
+const NOMOR_WA = '628816299831';
 document.getElementById('kirim').addEventListener('click', () => {
   const nama = document.getElementById('nama').value.trim();
   const minat = document.getElementById('minat').value;
@@ -64,10 +64,11 @@ document.getElementById('tahun').textContent = new Date().getFullYear();
   const tipeUnit = (bi, k) => bi === 0 ? (k < 10 ? 36 : 45) : 30;
   const STATUS = { a: 'Tersedia', b: 'Dipesan', s: 'Terjual' };
 
-  // Status contoh (acak tetap). Ganti dengan data asli, misalnya: { 'A-1': 's', 'A-2': 'b' }
+  // Semua unit tampil 'Tersedia'. Isi status asli di statusManual, misalnya: { 'A-1': 's', 'A-2': 'b' }
+  // s = Terjual, b = Dipesan. Unit yang tidak diisi dianggap Tersedia.
   const statusManual = {};
   const rnd = i => { const x = Math.sin(i * 9301 + 49297) * 233280; return x - Math.floor(x); };
-  const statusDefault = i => { const r = rnd(i); return r < 0.38 ? 's' : r < 0.5 ? 'b' : 'a'; };
+  const statusDefault = () => 'a';
 
   // Jalan, taman, dan fasilitas
   const road = (x, y, w, h) => svg.appendChild(el('rect', { x, y, width: w, height: h, class: 'sp-road' }));
@@ -128,7 +129,7 @@ document.getElementById('tahun').textContent = new Date().getFullYear();
     `<span><i class="i-a"></i>Tersedia (${counts.a})</span>` +
     `<span><i class="i-b"></i>Dipesan (${counts.b})</span>` +
     `<span><i class="i-s"></i>Terjual (${counts.s})</span>` +
-    `<span class="sp-note">Blok A: Tipe 36 &amp; 45 &nbsp;·&nbsp; Blok B–J: Tipe 30 Subsidi &nbsp;·&nbsp; Masjid, taman &amp; fasilitas umum di tengah kawasan</span>`;
+    `<span class="sp-note">Blok A: Tipe 36 &amp; 45 &nbsp;·&nbsp; Blok B–J: Tipe 30 Subsidi &nbsp;·&nbsp; Masjid, taman &amp; fasilitas umum di tengah kawasan &nbsp;·&nbsp; Ketersediaan dapat berubah, konfirmasi ke tim kami</span>`;
 
   // Detail unit
   const panel = document.getElementById('sp-detail');
@@ -899,4 +900,51 @@ document.getElementById('tahun').textContent = new Date().getFullYear();
   x.addEventListener('click',close);
   lb.addEventListener('click',e=>{ if(e.target===lb) close(); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!lb.hidden) close(); });
+})();
+
+
+// ===== Simulasi cicilan KPR =====
+(() => {
+  const $ = id => document.getElementById(id);
+  const tipe = $('sim-tipe');
+  if (!tipe) return;
+  const dp = $('sim-dp'), tenor = $('sim-tenor'), bunga = $('sim-bunga');
+  const rp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+  const sub = () => tipe.selectedOptions[0].dataset.subsidi === '1';
+  const nilai = () => {
+    const s = sub();
+    return {
+      harga: +tipe.selectedOptions[0].dataset.harga * 1e6,
+      d: Math.min(90, Math.max(s ? 1 : 0, +dp.value || 0)),
+      t: Math.min(s ? 20 : 30, Math.max(1, Math.round(+tenor.value) || 1)),
+      b: Math.min(30, Math.max(0, +bunga.value || 0))
+    };
+  };
+  const hitung = () => {
+    const { harga, d, t, b } = nilai();
+    const uangMuka = harga * d / 100, pokok = harga - uangMuka, n = t * 12, r = b / 100 / 12;
+    const cicilan = r === 0 ? pokok / n : pokok * r / (1 - Math.pow(1 + r, -n));
+    $('sim-cicilan').textContent = rp(cicilan);
+    $('sim-harga').textContent = rp(harga);
+    $('sim-uang-muka').textContent = rp(uangMuka) + ' (' + d + '%)';
+    $('sim-pokok').textContent = rp(pokok);
+    $('sim-total').textContent = rp(cicilan * n);
+    $('sim-note').textContent = sub()
+      ? 'Skema subsidi FLPP: bunga tetap 5% sepanjang tenor, tenor hingga 20 tahun, uang muka mulai 1%. Hanya berlaku bagi pembeli yang memenuhi syarat dan disetujui bank pelaksana; ketentuan pemerintah dapat berubah.'
+      : 'Skema KPR bank: uang muka, tenor, dan bunga di atas hanyalah asumsi. Bunga mengikuti kebijakan bank dan dapat berubah selama tenor.';
+    const teks = `Halo PT. Amerta Raya Perkasa, saya ingin konsultasi KPR untuk Tipe ${tipe.value} (harga ${rp(harga)}), uang muka ${d}%, tenor ${t} tahun. Estimasi cicilan ${rp(cicilan)} per bulan.`;
+    $('sim-wa').href = `https://wa.me/${NOMOR_WA}?text=${encodeURIComponent(teks)}`;
+  };
+  const preset = () => {
+    const s = sub();
+    dp.value = s ? 1 : 20; tenor.value = s ? 20 : 15; bunga.value = s ? 5 : 8;
+    tenor.max = s ? 20 : 30; dp.min = s ? 1 : 0;
+    hitung();
+  };
+  tipe.addEventListener('change', preset);
+  [dp, tenor, bunga].forEach(i => {
+    i.addEventListener('input', hitung);
+    i.addEventListener('change', () => { const v = nilai(); dp.value = v.d; tenor.value = v.t; bunga.value = v.b; hitung(); });
+  });
+  preset();
 })();
