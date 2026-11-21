@@ -337,3 +337,7 @@ footer p{margin-top:8px;max-width:38ch}
 .vt-scenes[hidden]{display:none}
 .pnlm-hotspot-base.vt-hot{width:44px;height:44px;border-radius:50%;background:rgba(20,23,28,.78) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 15l6-6 6 6'/%3E%3C/svg%3E") center/26px no-repeat;border:2px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.35)}
 .pnlm-hotspot-base.vt-hot span{white-space:nowrap}
+.pnlm-hotspot-base.vt-back{background-color:rgba(168,134,90,.9)}
+.pnlm-hotspot-base.vt-back{transform:rotate(180deg)}
+.pnlm-hotspot-base.vt-info{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.92);border:2px solid var(--brass)}
+.vt-stage{height:clamp(380px,70vh,720px)}
